@@ -4,25 +4,26 @@ The difference between a diagram that looks professional and one that looks like
 first-draft wireframe is almost never the information — it's the layout discipline. These
 are the rules distilled from iterating a real diagram from cramped to clean.
 
-## 0. Sparse beats complete — the cardinal rule
+## 0. Density is the enemy — and the canvas is infinite
 
-The most common failure is trying to show the *whole system at once*, which forces everything
-tight and unreadable. **Readability beats completeness, every time.** A diagram that omits
-detail but reads in five seconds wins over one that contains everything and reads in five
-minutes. Concretely:
+The failure mode is *cramming*, not node count. A 47-node diagram isn't bad because it has 47
+nodes — it's bad when they're packed into a small area with edges crossing each other. The
+same 47 nodes, spread out with real spacing and clean routing, read fine. So the rule is
+**scale the layout to the content, never the content to a fixed frame** — show everything the
+system actually has, and give each node room.
 
-- **Cap the elements per view.** ~8–14 nodes is a readable diagram; 30–40+ is a wall. If the
-  system is bigger, do NOT shrink everything to fit — **show fewer things and split the rest
-  onto separate pages** (one page for the request path, another for the admin console, another
-  for the background job). A reader flips pages happily; nobody parses a maze. When you catch
-  yourself adding the 15th node, ask what could move to its own page instead.
-- **No long connectors crossing the body.** An arrow running diagonally across other boxes is
-  the single worst readability killer. Keep the main flow a straight spine; attach secondary
-  things (identity providers, side services, stores) as *short* edges to the nearest point, or
-  push them to a margin with a gentle arc. Two nodes that "need" a long crossing edge usually
-  belong on the same axis — move one.
-- **When in doubt, delete a node and add space.** Being too sparse essentially never happens;
-  being too dense is the default mistake. Bias hard toward air.
+- **Spread out; never drop detail to "fit".** The canvas is infinite and `commit()`
+  zoom-to-fits, so there's no penalty for a large diagram — only for a *dense* one. If it
+  feels tight, the answer is more space, not fewer nodes.
+- **Generous gaps (~80px+), short labels, one clear spine.** These make a big diagram read as
+  easily as a small one. (Detail lives in container titles, edge labels, the legend — §3b.)
+- **Clean routing, not short edges.** Longer connectors are fine as the diagram grows — just
+  never let one cross *other nodes*. Align related nodes so their edge is a straight shot;
+  route secondary / identity / write edges along the margins with a gentle arc.
+- **Split into multiple pages only when the *relationships* genuinely tangle** (à la C4's
+  context → container → component levels) — as a tool for managing crossing complexity, never
+  as a cap on how much you're allowed to show. One spacious page is the default; richness is
+  welcome, cramming is not.
 
 ## 1. Whitespace and rhythm
 
