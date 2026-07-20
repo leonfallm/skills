@@ -42,6 +42,10 @@ system actually has, and give each node room.
 - Give the group a **filled, titled header strip** at the top (`fill:'semi'`), not a bare
   text label sitting on the border line. The strip reads as a caption; a floating label
   reads as a mistake.
+- **Every dashed container MUST be labeled — an unlabeled grouping box should not exist.** A
+  dashed rectangle with no title makes the reader guess what the boundary *means* (trust
+  boundary? deployment unit? process app?). If you won't name it, don't draw it — just place
+  the nodes. The `container()` helper enforces this (it throws without a title).
 - Leave a gap (~28px) between the header strip and the first node inside.
 
 ## 3. Typography
@@ -110,13 +114,22 @@ Only *after* you've chosen your one axis, a role-coding palette can help — e.g
 `red`, a secondary source `orange`. But that table is a menu for one consistent axis, not a
 licence to colour every box differently.
 
-## 6. Legends and annotations
+## 6. Legends — complete, not minimal
 
-- If edges have more than one meaning (solid vs dashed, colour coding), explain them in a
-  **bordered legend box** (`legend()` helper), placed in dead space (e.g. the centre gap of
-  a comparison). Scattering the same explanation as inline arrow labels is noisy.
+The legend is the diagram's key: **a reader should be able to decode the entire picture from
+it alone.** So make it thorough, not a token two lines.
+
+- **Enumerate every visual encoding you used** — every fill colour and what it means, every
+  shape class (rectangle = component, pill/oval = datastore, circle = actor/person), every
+  line style (solid vs dashed, and each dashed colour), and what a dashed **container** means.
+  If a distinction appears on the canvas, it appears in the legend. Leaving one out makes the
+  reader guess — the whole point of the legend is that they never have to.
+- Use a **bordered legend box** (`legend()` helper) with real swatches (`{color, geo, text}`
+  rows render a filled sample), placed in dead space (a margin, or the centre gap of a
+  comparison). Swatches beat colour *words*.
 - Keep inline edge labels for genuinely per-edge information (a payload, a protocol, a
-  cardinality) — see the sequence archetype.
+  cardinality) — see the sequence archetype — but the *meaning of the styles* lives in the
+  legend, stated once and in full.
 
 ## 7. Alignment and symmetry
 

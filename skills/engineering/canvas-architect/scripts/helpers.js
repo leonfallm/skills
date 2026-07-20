@@ -98,6 +98,7 @@ function arrow(name, from, to, o = {}) {
 // Dashed grouping container with a filled, titled header strip (never a bare label on the border).
 // Returns { strip, innerX, innerW, bodyTop, close(bottomY) }. Call close() after placing contents.
 function container(name, x, y, w, title, o = {}) {
+  if (!title || !String(title).trim()) throw new Error('container() requires a label — an unlabeled dashed grouping box should not exist')
   const pad = o.pad != null ? o.pad : 40                  // side padding so nodes never touch walls
   const strip = box(name + '_strip', x + pad, y + 18, w - 2 * pad, 40, o.stripColor || 'grey', title, { fill: 'semi', size: 's' })
   return {

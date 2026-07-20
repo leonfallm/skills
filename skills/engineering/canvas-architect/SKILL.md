@@ -62,9 +62,10 @@ Full detail with rationale in `references/design-principles.md`; the essentials:
 
 - **Whitespace is not wasted.** Leave ~50–70px between stacked nodes so connectors are
   visible and the eye can group things. Cramped diagrams read as unfinished.
-- **Containers need padding.** Nodes must never touch the dashed group wall — inset them
-  (the `container()` helper defaults to 40px). Give a group a filled **titled header
-  strip**, never a bare text label floating on the border line.
+- **Containers need padding, and must be labeled.** Nodes must never touch the dashed group
+  wall — inset them (the `container()` helper defaults to 40px). Give a group a filled
+  **titled header strip**, never a bare text label. **An unlabeled dashed box must not exist**
+  — if you won't name the boundary, don't draw it (the helper throws without a title).
 - **Typography hierarchy.** Big `xl` title, `sans` font everywhere (the default hand-drawn
   font looks like a whiteboard, not an architecture doc). Inside a node: a name line plus
   **at most two** concise detail lines. If you're writing a paragraph in a box, cut it.
@@ -75,7 +76,10 @@ Full detail with rationale in `references/design-principles.md`; the essentials:
 - **Colour carries meaning, consistently.** Pick a small palette and stick to it: one
   accent for the highlighted/chosen thing, red for rejected/cost, green for the canonical
   store, one neutral for infrastructure. Don't rainbow every box.
-- **Explain edge styles in a bordered legend box**, not scattered inline labels.
+- **Legend must be complete**, not a token two lines: enumerate *every* encoding used — each
+  fill colour, each shape class (rectangle=component, pill=datastore, circle=actor), each line
+  style, and what a dashed container means. A reader should decode the whole diagram from the
+  legend alone. Use swatches (`{color, geo, text}` rows), not colour words.
 - **Align to a grid.** Shared column centres, shared row Ys across parallel columns. When
   comparing options, keep equivalent rows at the same height so the eye compares across.
 - **Name the structure (C4 rule): every container/boundary gets a title, and relationships
