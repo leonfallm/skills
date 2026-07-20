@@ -4,11 +4,31 @@ The difference between a diagram that looks professional and one that looks like
 first-draft wireframe is almost never the information — it's the layout discipline. These
 are the rules distilled from iterating a real diagram from cramped to clean.
 
+## 0. Sparse beats complete — the cardinal rule
+
+The most common failure is trying to show the *whole system at once*, which forces everything
+tight and unreadable. **Readability beats completeness, every time.** A diagram that omits
+detail but reads in five seconds wins over one that contains everything and reads in five
+minutes. Concretely:
+
+- **Cap the elements per view.** ~8–14 nodes is a readable diagram; 30–40+ is a wall. If the
+  system is bigger, do NOT shrink everything to fit — **show fewer things and split the rest
+  onto separate pages** (one page for the request path, another for the admin console, another
+  for the background job). A reader flips pages happily; nobody parses a maze. When you catch
+  yourself adding the 15th node, ask what could move to its own page instead.
+- **No long connectors crossing the body.** An arrow running diagonally across other boxes is
+  the single worst readability killer. Keep the main flow a straight spine; attach secondary
+  things (identity providers, side services, stores) as *short* edges to the nearest point, or
+  push them to a margin with a gentle arc. Two nodes that "need" a long crossing edge usually
+  belong on the same axis — move one.
+- **When in doubt, delete a node and add space.** Being too sparse essentially never happens;
+  being too dense is the default mistake. Bias hard toward air.
+
 ## 1. Whitespace and rhythm
 
-- **Vertical gaps of ~50–70px** between stacked nodes. Too tight and the connecting arrows
-  are hidden between flush box edges, so the flow reads as one merged blob. Air lets the
-  eye segment the pipeline into steps.
+- **Vertical gaps of ~80px** between stacked nodes (tighter only for tight sub-groups). Too
+  little and the connecting arrows hide between flush edges, so the flow reads as one blob.
+  Air lets the eye segment the pipeline into steps.
 - **Consistent gaps.** A varying rhythm looks accidental. Pick one gap value and reuse it.
 - Don't fear a large canvas. On an infinite canvas, generous margins cost nothing and make
   routing (especially bypass arcs) clean. `commit()` zoom-to-fits your page anyway.

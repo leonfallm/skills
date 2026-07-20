@@ -33,9 +33,12 @@ This is a hard dependency: with no tldraw offline there is no canvas to draw on.
    per-launch token) while running. Use the bundled helper `scripts/canvas.sh` for every
    call — it finds the token, launches the app if it's closed, targets the focused document,
    and captures screenshots, so you never hand-roll curl/token boilerplate.
-2. **Plan the layout before drawing.** Pick an archetype (see `references/archetypes.md`),
-   decide the grid (column centres, row Ys), and keep it in your head or a comment. Good
-   diagrams are planned, not nudged into place.
+2. **Plan the layout before drawing — and plan sparse.** Pick an archetype (see
+   `references/archetypes.md`), decide the grid (column centres, row Ys). Aim for **~8–14
+   nodes**; if the system is bigger, show fewer here and split the rest onto separate pages
+   rather than cramming — readability beats completeness (see design-principles §0). Keep the
+   main flow a straight spine; attach identity/side services as short edges, never long
+   diagonals across the body.
 3. **Draw on a dedicated page.** Write a JS file that uses the primitives in
    `scripts/helpers.js`. Prepend the helpers and run it:
    ```bash
