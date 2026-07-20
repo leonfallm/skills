@@ -47,14 +47,19 @@ This is a hard dependency: with no tldraw offline there is no canvas to draw on.
    ```
    Always start with `await newPage('<name>')` — it draws on a fresh page so the user's
    own sketch on Page 1 is never touched, and it's idempotent so you can re-run freely.
-4. **Screenshot and actually look.**
+4. **Check the lint, then screenshot and actually look.** `commit()` returns a
+   `lint` report — `{ ok, count, issues }` — that scans the drawn page for the recurring
+   defects: **unlabeled dashed containers, nodes poking outside a container, overlapping
+   boxes, and crammed spacing (<12px).** It reads the canvas, so it
+   catches raw-drawn mistakes too, not just helper calls. Fix everything it flags first. Then:
    ```bash
    scripts/canvas.sh shot        # prints a JPEG path
    ```
-   Then **Read that image path.** Judge it as a designer would: overlaps? text overflowing
-   boxes? arrows hidden between flush boxes? labels on top of borders? cramped containers?
-5. **Refine and re-run.** Edit the JS, re-run (the page clears itself), screenshot again.
-   Two or three passes is normal and expected — budget for them. Stop when it reads cleanly.
+   **Read that image path** and judge what the lint can't — hierarchy, routing, whether it
+   reads in five seconds. (The lint is a safety net, not a substitute for looking.)
+5. **Refine and re-run.** Edit the JS, re-run (the page clears itself), lint + screenshot
+   again. Two or three passes is normal — budget for them. Stop when `lint.ok` is true *and*
+   it reads cleanly.
 
 ## Design principles (what separates designed from wireframed)
 

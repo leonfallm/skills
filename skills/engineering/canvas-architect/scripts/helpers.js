@@ -143,10 +143,57 @@ function legend(name, x, y, w, rows, o = {}) {
   return frame
 }
 
-// Flush shapes + bindings to the canvas. Pass {fit:false} to keep the current camera.
+// Layout linter — scans the current page for the defects that keep recurring, so the verify
+// step is deterministic (not just eyeballed). Catches raw-drawn mistakes too, since it reads
+// the canvas, not our helper calls. commit() runs it automatically and returns the report.
+// Returns { ok, count, issues:[{type, msg, at:[x,y]}] }. Advisory — still look at the screenshot.
+function lint() {
+  const text = (rt) => { let o = ''; const w = (n) => { if (!n) return; if (typeof n.text === 'string') o += n.text; if (Array.isArray(n.content)) n.content.forEach(w) }; try { w(rt) } catch (e) {} ; return o.trim() }
+  const shp = editor.getCurrentPageShapes()
+  const bnd = (s) => { const b = editor.getShapePageBounds(s.id); return { x1: b.minX, y1: b.minY, x2: b.maxX, y2: b.maxY, w: b.w, h: b.h } }
+  const area = (a, b) => Math.max(0, Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1)) * Math.max(0, Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1))
+  const isStrip = (s) => String(s.id).includes('_strip')
+  const geos = shp.filter(s => s.type === 'geo')
+  const frames = geos.filter(s => s.props.dash === 'dashed' && s.props.fill === 'none')   // dashed grouping boxes
+  const nodes = geos.filter(s => text(s.props.richText) && !frames.includes(s) && !isStrip(s))
+  const issues = []
+  const push = (type, b, msg) => issues.push({ type, at: [Math.round(b.x1), Math.round(b.y1)], msg })
+
+  // A. every dashed container must be labeled (own text, or a wide header strip at its top)
+  for (const f of frames) {
+    const fb = bnd(f)
+    if (text(f.props.richText)) continue
+    const strip = geos.find(s => { const b = bnd(s); return text(s.props.richText) && b.y1 <= fb.y1 + 40 && b.y1 >= fb.y1 - 6 && (b.x2 - b.x1) > 0.5 * fb.w })
+    if (!strip) push('unlabeled-container', fb, 'dashed container has no label — add a titled header strip, or don\'t draw the box')
+  }
+  // B. a node that's mostly inside a container must not poke past its walls
+  for (const f of frames) { const fb = bnd(f)
+    for (const n of nodes) { const nb = bnd(n)
+      if (area(nb, fb) <= 0.4 * nb.w * nb.h) continue
+      const outside = nb.x1 < fb.x1 + 6 || nb.x2 > fb.x2 - 6 || nb.y1 < fb.y1 + 6 || nb.y2 > fb.y2 - 6
+      if (outside) push('container-overflow', nb, `"${text(n.props.richText).slice(0, 22)}" pokes outside its container — inset it or widen the container`)
+    }
+  }
+  // C. content boxes must not overlap each other
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+    const a = bnd(nodes[i]), b = bnd(nodes[j])
+    if (area(a, b) > 100) push('overlap', a, `"${text(nodes[i].props.richText).slice(0, 18)}" overlaps "${text(nodes[j].props.richText).slice(0, 18)}"`)
+  }
+  // D. adjacent content boxes crammed < 12px apart (bias toward air; the canvas is infinite)
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+    const a = bnd(nodes[i]), b = bnd(nodes[j])
+    const ox = Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1), oy = Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1)
+    if (ox > 4 && oy <= 0 && Math.abs(oy) < 12) push('crowded', a, 'two boxes are <12px apart vertically — add spacing')
+    else if (oy > 4 && ox <= 0 && Math.abs(ox) < 12) push('crowded', a, 'two boxes are <12px apart horizontally — add spacing')
+  }
+  return { ok: issues.length === 0, count: issues.length, issues }
+}
+
+// Flush shapes + bindings to the canvas, then lint. Pass {fit:false} to keep the current camera.
+// Returns { shapes, lint } — check lint.issues and fix any before considering the diagram done.
 function commit(o = {}) {
   editor.createShapes(shapes)
   editor.createBindings(bindings)
   if (o.fit !== false) editor.zoomToFit()
-  return { shapes: editor.getCurrentPageShapes().length }
+  return { shapes: editor.getCurrentPageShapes().length, lint: lint() }
 }
