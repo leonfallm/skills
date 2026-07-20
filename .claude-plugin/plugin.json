@@ -1,0 +1,22 @@
+{
+  "name": "leonfallm-skills",
+  "version": "0.1.0",
+  "description": "Agent skills — canvas-architect draws hand-drawn architecture, C4, flow, sequence and comparison diagrams on the tldraw offline canvas, with a screenshot-verify loop and swappable palettes.",
+  "author": {
+    "name": "Leon Fallman",
+    "url": "https://www.monterro.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "diagram",
+    "architecture",
+    "tldraw",
+    "c4",
+    "claude-code",
+    "codex",
+    "cursor"
+  ],
+  "skills": [
+    "./skills/engineering/canvas-architect"
+  ]
+}
