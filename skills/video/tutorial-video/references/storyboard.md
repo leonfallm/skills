@@ -82,23 +82,40 @@ If the pace is wrong, change the words or the actions first (fewer words, `pace:
 
 ## Brand
 
+Every colour in the video comes from these values. None of them is required.
+
 ```json
 "brand": {
-  "accent": "#0E7C66", "accent2": "#17A98B",
+  "theme": "dark",
+  "accent": "#0E7C66", "accent2": "#17A98B", "onAccent": "#FFFFFF",
   "ring": "#E8590C",
-  "ground": "#F5F3EE", "ink": "#15161A", "muted": "#63646C",
+  "ground": "#F5F3EE", "ink": "#15161A", "muted": "#63646C", "surface": "#FFFFFF",
   "dark": "#131418", "onDark": "#F5F3EE",
+  "page": "#FFFFFF",
   "font": "\"Archivo\", Arial, sans-serif",
   "fontFiles": [{ "family": "Archivo", "src": "fonts/archivo.woff2", "weight": "100 900" }],
   "logo": "logo-dark-on-light.png", "logoDark": "logo-light-on-dark.png"
 }
 ```
 
-Every key is optional. `accent` and `accent2` make the gradient on the highlighted word, the
-active step and the rule. `ring` is the highlight ring's colour: keep it clearly different from
-the product's own buttons, or the ring disappears on them. `ground` and `ink` are the stage and
-its text, `dark` and `onDark` the outro. Paths are relative to the video folder. `browser.mjs
-brand` prints the product's own colours and font as a starting point.
+| Key | What it colours | With nothing set |
+|---|---|---|
+| `theme` | `"dark"` switches `ground`, `ink`, `muted`, `surface`, `dark` and `onDark` to a dark set. Single keys still override it. | Light. |
+| `accent`, `accent2` | The gradient on the highlighted word, the active step and the rule. | The colour of the product's own main buttons, noted during the capture. Orange if none was found. |
+| `onAccent` | The number on the active step's badge. | White. |
+| `ring` | The highlight ring. It must differ clearly from the product's buttons, or it disappears on them. | Orange, or blue when the accent is itself red, orange or yellow. |
+| `ground`, `ink`, `muted` | The stage, its text and its quieter text. | Warm off-white, near-black, grey. |
+| `surface` | Lifted areas: chips, the address field, the light in the middle of the stage. | White. |
+| `dark`, `onDark` | The outro card and its text. | Near-black, off-white. |
+| `page` | What shows for a moment between two pages. | The app's own page background, noted during the capture. |
+| `font`, `fontFiles` | The typeface of everything the video itself says. | Inter if installed, else the system's interface font. |
+| `logo`, `logoDark` | An image above the steps and on the outro. | The `eyebrow` text. |
+
+Paths are relative to the video folder. `browser.mjs brand` prints the product's colours and
+font when you want to choose by hand.
+
+The captured screens are never recoloured: a dark stage around a light app, or the other way
+round, is fine. Pick the theme that suits where the video will be shown.
 
 Use a logo only when the person gave you the file or it is theirs to use. Never retype a
 wordmark as text and call it the logo.

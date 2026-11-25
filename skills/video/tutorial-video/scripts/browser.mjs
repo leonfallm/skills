@@ -133,9 +133,26 @@ async function daemon(cfg) {
     }, { masks: flow.masks, blurs: flow.blurs, hides: flow.hides }).catch(() => {});
   }
 
+  // What the product looks like, noted once: the page's background and the colour of its main buttons.
+  // The player uses them when video.json names no colours of its own.
+  async function hints() {
+    return page.evaluate(() => {
+      const rgb = c => (c.match(/[\d.]+/g) || []).map(Number);
+      const hex = c => '#' + rgb(c).slice(0, 3).map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+      const solid = c => { const v = rgb(c); return v.length >= 3 && (v[3] === undefined || v[3] > 0.5); };
+      const sat = c => { const [r, g, b] = rgb(c).map(v => v / 255), mx = Math.max(r, g, b); return mx ? (mx - Math.min(r, g, b)) / mx : 0; };
+      const bg = [document.body, document.documentElement].map(e => getComputedStyle(e).backgroundColor).find(solid);
+      const area = {};
+      for (const el of document.querySelectorAll('button,a,[role=button],input[type=submit]')) { const c = getComputedStyle(el).backgroundColor; if (!solid(c) || sat(c) < 0.35) continue; const r = el.getBoundingClientRect(); area[hex(c)] = (area[hex(c)] || 0) + r.width * r.height; }
+      const top = Object.entries(area).sort((a, b) => b[1] - a[1])[0];
+      return { page: bg ? hex(bg) : '#ffffff', accent: top ? top[0] : null };
+    }).catch(() => ({ page: '#ffffff', accent: null }));
+  }
+
   // A picture of the window. The same picture twice in a row is stored once.
   async function shot(name) {
     await redact();
+    if (!flow.hints || !flow.hints.accent) { const h = await hints(); flow.hints = { page: (flow.hints && flow.hints.page) || h.page, accent: h.accent }; }
     const buf = await page.screenshot({ type: 'png', scale: 'device' });
     const hash = crypto.createHash('sha1').update(buf).digest('hex');
     if (hash === lastHash && lastFile && fs.existsSync(path.join(cfg.dir, lastFile))) return lastFile;

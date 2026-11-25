@@ -5,22 +5,23 @@
      Nothing here is a CSS animation or a timer, so a frame can be rendered alone and always looks the same. -->
 <style>
 :root{
-  --ground:#F5F3EE; --ink:#15161A; --muted:#63646C; --accent:#E8590C; --accent2:#F59F00;
-  --dark:#131418; --on-dark:#F5F3EE; --ring:#E8590C;
+  --ground:#F5F3EE; --ink:#15161A; --muted:#63646C; --surface:#FFFFFF; --accent:#E8590C; --accent2:#F59F00; --on-accent:#FFFFFF;
+  --dark:#131418; --on-dark:#F5F3EE; --ring:#E8590C; --page:#FFFFFF;
   --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --line:color-mix(in srgb,var(--ink) 14%,var(--ground));
   --soft:color-mix(in srgb,var(--ink) 7%,var(--ground));
   --faint:color-mix(in srgb,var(--ink) 46%,var(--ground));
   --tint:color-mix(in srgb,var(--accent) 18%,var(--ground));
+  --label:color-mix(in srgb,var(--accent) 72%,var(--ink));   /* small accent text: nudged toward the text colour, so it reads on light and dark */
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:1920px;height:1080px;overflow:hidden;font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;background:var(--ground)}
-#stage{position:absolute;inset:0;overflow:hidden;background:radial-gradient(1400px 900px at 60% 50%,color-mix(in srgb,#fff 50%,var(--ground)) 0%,color-mix(in srgb,var(--ink) 5%,var(--ground)) 100%)}
+#stage{position:absolute;inset:0;overflow:hidden;background:radial-gradient(1400px 900px at 60% 50%,color-mix(in srgb,var(--surface) 50%,var(--ground)) 0%,color-mix(in srgb,var(--ink) 5%,var(--ground)) 100%)}
 .hl{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* intro */
 #intro{position:absolute;inset:0}
-#iEyebrow{position:absolute;left:0;right:0;top:352px;text-align:center;font-size:16px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--accent)}
+#iEyebrow{position:absolute;left:0;right:0;top:352px;text-align:center;font-size:16px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--label)}
 #iTitle{position:absolute;left:0;right:0;top:400px;text-align:center;font-weight:650;font-size:92px;letter-spacing:-.035em;line-height:1.08;white-space:nowrap}
 #iSub{position:absolute;left:0;right:0;top:540px;text-align:center;font-size:33px;color:var(--muted);letter-spacing:-.01em}
 #iRule{position:absolute;left:50%;top:622px;width:120px;height:3px;margin-left:-60px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
@@ -29,7 +30,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;font-family:var(--font);col
 #rail{position:absolute;left:70px;top:0;width:500px;height:1080px}
 #railHead{position:absolute;left:0;top:74px;display:flex;align-items:center;gap:14px;height:24px}
 #railHead img{height:22px;display:block}
-#railHead span{font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+#railHead span{font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
 .step{position:absolute;left:0;width:500px}
 .badge{position:absolute;left:0;top:0;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:650;font-size:21px;background:var(--soft);color:var(--faint)}
 .badge svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
@@ -37,23 +38,23 @@ html,body{width:1920px;height:1080px;overflow:hidden;font-family:var(--font);col
 .sd{position:absolute;left:66px;top:54px;width:434px;font-size:19px;line-height:1.45;color:color-mix(in srgb,var(--ink) 78%,var(--ground))}
 .sd p{margin-bottom:10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-.chip{height:36px;border-radius:18px;padding:0 13px;white-space:nowrap;display:flex;align-items:center;font-size:17px;font-weight:550;background:color-mix(in srgb,#fff 70%,var(--ground));box-shadow:0 0 0 1.5px var(--line);color:var(--faint)}
+.chip{height:36px;border-radius:18px;padding:0 13px;white-space:nowrap;display:flex;align-items:center;font-size:17px;font-weight:550;background:color-mix(in srgb,var(--surface) 70%,var(--ground));box-shadow:0 0 0 1.5px var(--line);color:var(--faint)}
 .chip.on{background:var(--ink);color:var(--ground);box-shadow:none}
 .arrow{color:var(--faint);display:flex;align-items:center;font-size:18px}
 .note{margin-top:12px;font-size:16.5px;color:var(--muted);line-height:1.45}
 
 /* the browser window */
-#vp{position:absolute;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 14%,transparent),0 40px 100px color-mix(in srgb,var(--ink) 22%,transparent)}
-#content{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff}
-#bar{position:absolute;left:0;top:0;height:40px;background:#ECEBE8;border-bottom:1px solid #D9D7D2;display:flex;align-items:center;padding:0 16px}
-#bar i{width:11px;height:11px;border-radius:50%;display:block;margin-right:7px;background:#C9C7C2}
-#addr{position:absolute;left:50%;top:7px;height:26px;border-radius:13px;background:#FAFAF8;box-shadow:0 0 0 1px #D9D7D2;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:#4A4B52;white-space:nowrap;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+#vp{position:absolute;border-radius:14px;overflow:hidden;background:var(--page);box-shadow:0 0 0 1px var(--line),0 40px 100px rgba(0,0,0,.24)}
+#content{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--page)}
+#bar{position:absolute;left:0;top:0;height:40px;background:color-mix(in srgb,var(--ink) 7%,var(--ground));border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px}
+#bar i{width:11px;height:11px;border-radius:50%;display:block;margin-right:7px;background:color-mix(in srgb,var(--ink) 22%,var(--ground))}
+#addr{position:absolute;left:50%;top:7px;height:26px;border-radius:13px;background:color-mix(in srgb,var(--surface) 75%,var(--ground));box-shadow:0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 #shots,#clips{position:absolute;left:0;top:40px}
 #shots img,#clips img{position:absolute;left:0;top:0;display:none}
 #scrollBox{position:absolute;overflow:hidden;display:none}
 #scrollBox div{position:absolute;left:0;top:0;overflow:hidden}
 #scrollBox img{position:absolute}
-#pressFx{position:absolute;background:rgba(0,0,0,.13);pointer-events:none;display:none}
+#pressFx{position:absolute;background:rgb(36,36,36);mix-blend-mode:exclusion;pointer-events:none;display:none}
 #ring{position:absolute;border:2.5px solid var(--ring);pointer-events:none;display:none;box-shadow:0 0 0 5px color-mix(in srgb,var(--ring) 14%,transparent)}
 #cursor{position:absolute;left:0;top:0;width:34px;height:34px;transform-origin:4px 3px}
 
@@ -97,8 +98,16 @@ const words = s => String(s || '').replace(/[*]/g, '').trim().split(/\s+/).filte
 const setOp = (el, o, ty = 0, sc = 1) => { el.style.opacity = o; el.style.transform = `translateY(${ty}px) scale(${sc})`; };
 
 // ---- brand: colours, font and logo from video.json
-const B = V.brand || {}, root = document.documentElement.style;
-for (const [k, v] of Object.entries({ ground: B.ground, ink: B.ink, muted: B.muted, accent: B.accent, accent2: B.accent2 || B.accent, dark: B.dark, 'on-dark': B.onDark, ring: B.ring, font: B.font }))
+const B = V.brand || {}, root = document.documentElement.style, HINT = F.hints || {};
+const DARK = { ground: '#131418', ink: '#F3F1EC', muted: '#A4A5AD', surface: '#262830', dark: '#08090B', onDark: '#F3F1EC' };
+const hue = c => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(c || ''); if (!m) return null; const [r, g, b] = m.slice(1).map(x => parseInt(x, 16) / 255), mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+  if (d < 0.08) return null; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+// With no accent in video.json the video takes the product's own button colour, noted when the flow was captured.
+const T = { ...(B.theme === 'dark' ? DARK : {}), accent: HINT.accent, ...B };
+if (!T.accent2) T.accent2 = T.accent;
+// The ring must stand out from the product's own buttons: orange, or blue when the product itself is warm-coloured.
+if (!T.ring) { const h = hue(T.accent || '#E8590C'), warm = h != null && (h < 55 || h > 335); T.ring = T.accent && warm ? '#2F6BFF' : '#E8590C'; }
+for (const [k, v] of Object.entries({ ground: T.ground, ink: T.ink, muted: T.muted, surface: T.surface, accent: T.accent, accent2: T.accent2, 'on-accent': T.onAccent, dark: T.dark, 'on-dark': T.onDark, ring: T.ring, font: T.font, page: T.page || HINT.page }))
   if (v) root.setProperty('--' + k, v);
 if (B.fontFiles) document.head.insertAdjacentHTML('beforeend', '<style>' + B.fontFiles.map(f => `@font-face{font-family:"${f.family}";src:url("${f.src}");font-weight:${f.weight || '100 900'}}`).join('') + '</style>');
 
@@ -271,9 +280,9 @@ function render(t) {
     const sd = el.querySelector('.sd'); el.style.top = y + 'px'; y += 78 + open * (sd.scrollHeight + 14);
     sd.style.opacity = open; sd.style.transform = `translateY(${(1 - open) * -8}px)`; sd.style.visibility = open > 0.01 ? 'visible' : 'hidden';
     const b = el.querySelector('.badge'), st = el.querySelector('.st');
-    if (i < cur || allDone) { if (b.dataset.s !== 'd') { b.innerHTML = CHECK; b.dataset.s = 'd'; } b.style.background = 'var(--tint)'; b.style.color = 'var(--accent)'; st.style.color = 'var(--muted)'; b.style.transform = 'scale(1)'; }
+    if (i < cur || allDone) { if (b.dataset.s !== 'd') { b.innerHTML = CHECK; b.dataset.s = 'd'; } b.style.background = 'var(--tint)'; b.style.color = 'var(--label)'; st.style.color = 'var(--muted)'; b.style.transform = 'scale(1)'; }
     else { if (b.dataset.s !== 'n') { b.textContent = i + 1; b.dataset.s = 'n'; }
-      if (on) { b.style.background = 'linear-gradient(105deg,var(--accent),var(--accent2))'; b.style.color = '#fff'; st.style.color = 'var(--ink)'; b.style.transform = `scale(${1 + 0.12 * Math.sin(Math.PI * seg(t, ST[i], ST[i] + 0.45))})`; }
+      if (on) { b.style.background = 'linear-gradient(105deg,var(--accent),var(--accent2))'; b.style.color = 'var(--on-accent)'; st.style.color = 'var(--ink)'; b.style.transform = `scale(${1 + 0.12 * Math.sin(Math.PI * seg(t, ST[i], ST[i] + 0.45))})`; }
       else { b.style.background = 'var(--soft)'; b.style.color = 'var(--faint)'; st.style.color = 'var(--muted)'; b.style.transform = 'scale(1)'; } }
   });
   chipEls.forEach(c => { const ct = +c.dataset.t, on = t >= ct; c.className = 'chip' + (on ? ' on' : ''); c.style.transform = `scale(${on ? 1 + 0.08 * Math.sin(Math.PI * seg(t, ct, ct + 0.3)) : 1})`; });
