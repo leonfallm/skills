@@ -7,6 +7,7 @@
 :root{
   --ground:#F5F3EE; --ink:#15161A; --muted:#63646C; --surface:#FFFFFF; --accent:#E8590C; --accent2:#F59F00; --on-accent:#FFFFFF;
   --dark:#131418; --on-dark:#F5F3EE; --ring:#E8590C; --page:#FFFFFF;
+  --title:var(--ink); --title-weight:650; --logo-h:22px;
   --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --line:color-mix(in srgb,var(--ink) 14%,var(--ground));
   --soft:color-mix(in srgb,var(--ink) 7%,var(--ground));
@@ -22,19 +23,19 @@ html,body{width:1920px;height:1080px;overflow:hidden;font-family:var(--font);col
 /* intro */
 #intro{position:absolute;inset:0}
 #iEyebrow{position:absolute;left:0;right:0;top:352px;text-align:center;font-size:16px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--label)}
-#iTitle{position:absolute;left:0;right:0;top:400px;text-align:center;font-weight:650;font-size:92px;letter-spacing:-.035em;line-height:1.08;white-space:nowrap}
+#iTitle{position:absolute;left:0;right:0;top:400px;text-align:center;font-weight:var(--title-weight);color:var(--title);font-size:92px;letter-spacing:-.035em;line-height:1.08;white-space:nowrap}
 #iSub{position:absolute;left:0;right:0;top:540px;text-align:center;font-size:33px;color:var(--muted);letter-spacing:-.01em}
 #iRule{position:absolute;left:50%;top:622px;width:120px;height:3px;margin-left:-60px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
 
 /* step rail */
 #rail{position:absolute;left:70px;top:0;width:500px;height:1080px}
-#railHead{position:absolute;left:0;top:74px;display:flex;align-items:center;gap:14px;height:24px}
-#railHead img{height:22px;display:block}
+#railHead{position:absolute;left:0;top:74px;display:flex;align-items:center;gap:max(14px,calc(var(--logo-h) * .8));min-height:24px}
+#railHead img{height:var(--logo-h);display:block}
 #railHead span{font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
 .step{position:absolute;left:0;width:500px}
 .badge{position:absolute;left:0;top:0;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:650;font-size:21px;background:var(--soft);color:var(--faint)}
 .badge svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-.st{position:absolute;left:66px;top:7px;font-weight:650;font-size:28px;letter-spacing:-.02em;white-space:nowrap;color:var(--muted)}
+.st{position:absolute;left:66px;top:7px;font-weight:var(--title-weight);font-size:28px;letter-spacing:-.02em;white-space:nowrap;color:var(--muted)}
 .sd{position:absolute;left:66px;top:54px;width:434px;font-size:19px;line-height:1.45;color:color-mix(in srgb,var(--ink) 78%,var(--ground))}
 .sd p{margin-bottom:10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
@@ -63,8 +64,12 @@ html,body{width:1920px;height:1080px;overflow:hidden;font-family:var(--font);col
 #oLogo{position:absolute;left:0;right:0;top:282px;display:flex;justify-content:center}
 #oLogo img{height:46px;display:block}
 #oLogo span{font-size:16px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:color-mix(in srgb,var(--on-dark) 62%,var(--dark))}
-#oTitle{position:absolute;left:0;right:0;top:388px;text-align:center;font-weight:650;font-size:104px;letter-spacing:-.035em;line-height:1.06;white-space:nowrap}
+#oTitle{position:absolute;left:0;right:0;top:388px;text-align:center;font-weight:var(--title-weight);font-size:104px;letter-spacing:-.035em;line-height:1.06;white-space:nowrap}
 #oTag{position:absolute;left:0;right:0;top:536px;text-align:center;font-weight:550;font-size:42px;letter-spacing:-.015em}
+/* brand.align "left": the title cards set flush left */
+body.left #iEyebrow,body.left #iTitle,body.left #iSub,body.left #oTitle,body.left #oTag,body.left #oSmall{left:200px;right:auto;text-align:left}
+body.left #iRule{left:200px;margin-left:0;transform-origin:0 50%}
+body.left #oLogo{left:200px;right:auto;justify-content:flex-start}
 #oSmall{position:absolute;left:0;right:0;top:628px;text-align:center;font-size:24px;color:color-mix(in srgb,var(--on-dark) 66%,var(--dark));letter-spacing:.02em}
 </style></head>
 <body>
@@ -107,8 +112,9 @@ const T = { ...(B.theme === 'dark' ? DARK : {}), accent: HINT.accent, ...B };
 if (!T.accent2) T.accent2 = T.accent;
 // The ring must stand out from the product's own buttons: orange, or blue when the product itself is warm-coloured.
 if (!T.ring) { const h = hue(T.accent || '#E8590C'), warm = h != null && (h < 55 || h > 335); T.ring = T.accent && warm ? '#2F6BFF' : '#E8590C'; }
-for (const [k, v] of Object.entries({ ground: T.ground, ink: T.ink, muted: T.muted, surface: T.surface, accent: T.accent, accent2: T.accent2, 'on-accent': T.onAccent, dark: T.dark, 'on-dark': T.onDark, ring: T.ring, font: T.font, page: T.page || HINT.page }))
+for (const [k, v] of Object.entries({ ground: T.ground, ink: T.ink, muted: T.muted, surface: T.surface, accent: T.accent, accent2: T.accent2, 'on-accent': T.onAccent, dark: T.dark, 'on-dark': T.onDark, ring: T.ring, font: T.font, page: T.page || HINT.page, title: T.title, 'title-weight': T.titleWeight, 'logo-h': T.logoHeight ? T.logoHeight + 'px' : null }))
   if (v) root.setProperty('--' + k, v);
+if (T.align === 'left') document.body.classList.add('left');
 if (B.fontFiles) document.head.insertAdjacentHTML('beforeend', '<style>' + B.fontFiles.map(f => `@font-face{font-family:"${f.family}";src:url("${f.src}");font-weight:${f.weight || '100 900'}}`).join('') + '</style>');
 
 // ---- geometry. The capture is W x H CSS pixels; the browser window on the stage fits a 1280 x 880 area.
@@ -282,7 +288,7 @@ function render(t) {
     const b = el.querySelector('.badge'), st = el.querySelector('.st');
     if (i < cur || allDone) { if (b.dataset.s !== 'd') { b.innerHTML = CHECK; b.dataset.s = 'd'; } b.style.background = 'var(--tint)'; b.style.color = 'var(--label)'; st.style.color = 'var(--muted)'; b.style.transform = 'scale(1)'; }
     else { if (b.dataset.s !== 'n') { b.textContent = i + 1; b.dataset.s = 'n'; }
-      if (on) { b.style.background = 'linear-gradient(105deg,var(--accent),var(--accent2))'; b.style.color = 'var(--on-accent)'; st.style.color = 'var(--ink)'; b.style.transform = `scale(${1 + 0.12 * Math.sin(Math.PI * seg(t, ST[i], ST[i] + 0.45))})`; }
+      if (on) { b.style.background = 'linear-gradient(105deg,var(--accent),var(--accent2))'; b.style.color = 'var(--on-accent)'; st.style.color = 'var(--title)'; b.style.transform = `scale(${1 + 0.12 * Math.sin(Math.PI * seg(t, ST[i], ST[i] + 0.45))})`; }
       else { b.style.background = 'var(--soft)'; b.style.color = 'var(--faint)'; st.style.color = 'var(--muted)'; b.style.transform = 'scale(1)'; } }
   });
   chipEls.forEach(c => { const ct = +c.dataset.t, on = t >= ct; c.className = 'chip' + (on ? ' on' : ''); c.style.transform = `scale(${on ? 1 + 0.08 * Math.sin(Math.PI * seg(t, ct, ct + 0.3)) : 1})`; });
@@ -370,7 +376,7 @@ window.render = render;
 window.seek = async t => { render(t); await Promise.all(visible.map(im => im.decode().catch(() => {}))); };
 window.ready = document.fonts.ready
   .then(() => Promise.all([...document.images].map(i => i.complete ? 1 : new Promise(r => { i.onload = r; i.onerror = () => r(console.error('missing image: ' + i.src)); }))))
-  .then(() => { fitText($('iTitle'), 1700, 92); fitText($('oTitle'), 1700, 104); render(0); return true; });
+  .then(() => { const room = T.align === 'left' ? 1520 : 1700; fitText($('iTitle'), room, 92); fitText($('oTitle'), room, 104); render(0); return true; });
 })();
 </script>
 </body></html>

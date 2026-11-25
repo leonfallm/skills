@@ -89,12 +89,12 @@ Every colour in the video comes from these values. None of them is required.
   "theme": "dark",
   "accent": "#0E7C66", "accent2": "#17A98B", "onAccent": "#FFFFFF",
   "ring": "#E8590C",
-  "ground": "#F5F3EE", "ink": "#15161A", "muted": "#63646C", "surface": "#FFFFFF",
+  "ground": "#F5F3EE", "ink": "#15161A", "title": "#15161A", "muted": "#63646C", "surface": "#FFFFFF",
   "dark": "#131418", "onDark": "#F5F3EE",
   "page": "#FFFFFF",
-  "font": "\"Archivo\", Arial, sans-serif",
+  "font": "\"Archivo\", Arial, sans-serif", "titleWeight": 650, "align": "left",
   "fontFiles": [{ "family": "Archivo", "src": "fonts/archivo.woff2", "weight": "100 900" }],
-  "logo": "logo-dark-on-light.png", "logoDark": "logo-light-on-dark.png"
+  "logo": "logo-dark-on-light.png", "logoDark": "logo-light-on-dark.png", "logoHeight": 22
 }
 ```
 
@@ -105,14 +105,29 @@ Every colour in the video comes from these values. None of them is required.
 | `onAccent` | The number on the active step's badge. | White. |
 | `ring` | The highlight ring. It must differ clearly from the product's buttons, or it disappears on them. | Orange, or blue when the accent is itself red, orange or yellow. |
 | `ground`, `ink`, `muted` | The stage, its text and its quieter text. | Warm off-white, near-black, grey. |
+| `title` | The opening title and the active step's name, when a brand sets titles in another colour than text. | The same as `ink`. |
 | `surface` | Lifted areas: chips, the address field, the light in the middle of the stage. | White. |
 | `dark`, `onDark` | The outro card and its text. | Near-black, off-white. |
 | `page` | What shows for a moment between two pages. | The app's own page background, noted during the capture. |
 | `font`, `fontFiles` | The typeface of everything the video itself says. | Inter if installed, else the system's interface font. |
+| `titleWeight` | The weight of titles and step names. | 650. |
+| `align` | `"left"` sets the opening and closing cards flush left. | Centred. |
 | `logo`, `logoDark` | An image above the steps and on the outro. | The `eyebrow` text. |
+| `logoHeight` | The logo's height above the steps, in pixels. Follow the brand's minimum size. | 22. |
 
 Paths are relative to the video folder. `browser.mjs brand` prints the product's colours and
 font when you want to choose by hand.
+
+### A brand you use often
+
+Save it once and name it. Put `brand.json` (the same keys as above) with its logo and font
+files in `~/.tutorial-video/brands/<name>/`, or in a folder `<name>/` inside the video folder.
+Then write `"brand": "<name>"` in `video.json`, or `"brand": { "preset": "<name>", "ring":
+"#6470F6" }` to change single values for one video. Paths inside `brand.json` are relative to
+its own folder.
+
+A logo file often has empty space around the mark. `logoHeight` is the height of the whole
+image, so check in a still that the mark itself meets the brand's minimum size.
 
 The captured screens are never recoloured: a dark stage around a light app, or the other way
 round, is fine. Pick the theme that suits where the video will be shown.

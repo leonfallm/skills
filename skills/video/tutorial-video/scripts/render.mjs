@@ -12,7 +12,7 @@ import os from 'os';
 import path from 'path';
 import { execFileSync } from 'child_process';
 import { pathToFileURL } from 'url';
-import { HERE, loadPlaywright, launch, hasFfmpeg, parseArgs, readJSON, writeJSON } from './lib.mjs';
+import { HOME, HERE, loadPlaywright, launch, hasFfmpeg, parseArgs, readJSON, writeJSON } from './lib.mjs';
 
 const flags = parseArgs(process.argv.slice(2), ['no-audio', 'keep-frames']);
 const [dirArg, mode = 'render', ...rest] = flags._;
@@ -38,8 +38,24 @@ if (mode === 'init') {
 }
 
 const video = readJSON(at('video.json'));
-const pw = loadPlaywright();
 const build = at('.build'); fs.mkdirSync(build, { recursive: true });
+
+// A named brand: "brand": "acme" or { "preset": "acme", ...overrides } reads <video-folder>/acme/brand.json
+// or ~/.tutorial-video/brands/acme/brand.json, with its logo and font files beside it.
+{
+  const b = video.brand, name = typeof b === 'string' ? b : b && b.preset;
+  if (name) {
+    const from = [at(name), path.join(HOME, 'brands', name)].find(d => fs.existsSync(path.join(d, 'brand.json')));
+    if (!from) { console.error(`brand "${name}" not found: no brand.json in ${at(name)} or ${path.join(HOME, 'brands', name)}`); process.exit(1); }
+    const preset = readJSON(path.join(from, 'brand.json')), to = path.join(build, 'brand');
+    fs.rmSync(to, { recursive: true, force: true }); fs.cpSync(from, to, { recursive: true });
+    const rel = f => (f && !/^(https?:|file:|data:|\/)/.test(f) ? `.build/brand/${f}` : f);
+    preset.logo = rel(preset.logo); preset.logoDark = rel(preset.logoDark);
+    if (preset.fontFiles) preset.fontFiles = preset.fontFiles.map(f => ({ ...f, src: rel(f.src) }));
+    video.brand = { ...preset, ...(typeof b === 'object' ? b : {}) };
+  }
+}
+const pw = loadPlaywright();
 
 // The player page with the storyboard and the capture inside it, next to shots/ so the pictures resolve.
 const pageFile = at('.player.html');
