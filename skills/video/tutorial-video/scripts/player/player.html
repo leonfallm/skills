@@ -1,0 +1,367 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- The tutorial player. render.mjs injects the storyboard (video.json) and the capture (flow.json) as
+     window.DATA and steps this page one frame at a time: every frame is a pure function of the time t.
+     Nothing here is a CSS animation or a timer, so a frame can be rendered alone and always looks the same. -->
+<style>
+:root{
+  --ground:#F5F3EE; --ink:#15161A; --muted:#63646C; --accent:#E8590C; --accent2:#F59F00;
+  --dark:#131418; --on-dark:#F5F3EE; --ring:#E8590C;
+  --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --line:color-mix(in srgb,var(--ink) 14%,var(--ground));
+  --soft:color-mix(in srgb,var(--ink) 7%,var(--ground));
+  --faint:color-mix(in srgb,var(--ink) 46%,var(--ground));
+  --tint:color-mix(in srgb,var(--accent) 18%,var(--ground));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;background:var(--ground)}
+#stage{position:absolute;inset:0;overflow:hidden;background:radial-gradient(1400px 900px at 60% 50%,color-mix(in srgb,#fff 50%,var(--ground)) 0%,color-mix(in srgb,var(--ink) 5%,var(--ground)) 100%)}
+.hl{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* intro */
+#intro{position:absolute;inset:0}
+#iEyebrow{position:absolute;left:0;right:0;top:352px;text-align:center;font-size:16px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--accent)}
+#iTitle{position:absolute;left:0;right:0;top:400px;text-align:center;font-weight:650;font-size:92px;letter-spacing:-.035em;line-height:1.08;white-space:nowrap}
+#iSub{position:absolute;left:0;right:0;top:540px;text-align:center;font-size:33px;color:var(--muted);letter-spacing:-.01em}
+#iRule{position:absolute;left:50%;top:622px;width:120px;height:3px;margin-left:-60px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* step rail */
+#rail{position:absolute;left:70px;top:0;width:500px;height:1080px}
+#railHead{position:absolute;left:0;top:74px;display:flex;align-items:center;gap:14px;height:24px}
+#railHead img{height:22px;display:block}
+#railHead span{font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.step{position:absolute;left:0;width:500px}
+.badge{position:absolute;left:0;top:0;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:650;font-size:21px;background:var(--soft);color:var(--faint)}
+.badge svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.st{position:absolute;left:66px;top:7px;font-weight:650;font-size:28px;letter-spacing:-.02em;white-space:nowrap;color:var(--muted)}
+.sd{position:absolute;left:66px;top:54px;width:434px;font-size:19px;line-height:1.45;color:color-mix(in srgb,var(--ink) 78%,var(--ground))}
+.sd p{margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.chip{height:36px;border-radius:18px;padding:0 13px;white-space:nowrap;display:flex;align-items:center;font-size:17px;font-weight:550;background:color-mix(in srgb,#fff 70%,var(--ground));box-shadow:0 0 0 1.5px var(--line);color:var(--faint)}
+.chip.on{background:var(--ink);color:var(--ground);box-shadow:none}
+.arrow{color:var(--faint);display:flex;align-items:center;font-size:18px}
+.note{margin-top:12px;font-size:16.5px;color:var(--muted);line-height:1.45}
+
+/* the browser window */
+#vp{position:absolute;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 14%,transparent),0 40px 100px color-mix(in srgb,var(--ink) 22%,transparent)}
+#content{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff}
+#bar{position:absolute;left:0;top:0;height:40px;background:#ECEBE8;border-bottom:1px solid #D9D7D2;display:flex;align-items:center;padding:0 16px}
+#bar i{width:11px;height:11px;border-radius:50%;display:block;margin-right:7px;background:#C9C7C2}
+#addr{position:absolute;left:50%;top:7px;height:26px;border-radius:13px;background:#FAFAF8;box-shadow:0 0 0 1px #D9D7D2;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:#4A4B52;white-space:nowrap;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+#shots,#clips{position:absolute;left:0;top:40px}
+#shots img,#clips img{position:absolute;left:0;top:0;display:none}
+#scrollBox{position:absolute;overflow:hidden;display:none}
+#scrollBox div{position:absolute;left:0;top:0;overflow:hidden}
+#scrollBox img{position:absolute}
+#pressFx{position:absolute;background:rgba(0,0,0,.13);pointer-events:none;display:none}
+#ring{position:absolute;border:2.5px solid var(--ring);pointer-events:none;display:none;box-shadow:0 0 0 5px color-mix(in srgb,var(--ring) 14%,transparent)}
+#cursor{position:absolute;left:0;top:0;width:34px;height:34px;transform-origin:4px 3px}
+
+/* outro */
+#outro{position:absolute;inset:0;background:var(--dark);color:var(--on-dark);display:none}
+#oLogo{position:absolute;left:0;right:0;top:282px;display:flex;justify-content:center}
+#oLogo img{height:46px;display:block}
+#oLogo span{font-size:16px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:color-mix(in srgb,var(--on-dark) 62%,var(--dark))}
+#oTitle{position:absolute;left:0;right:0;top:388px;text-align:center;font-weight:650;font-size:104px;letter-spacing:-.035em;line-height:1.06;white-space:nowrap}
+#oTag{position:absolute;left:0;right:0;top:536px;text-align:center;font-weight:550;font-size:42px;letter-spacing:-.015em}
+#oSmall{position:absolute;left:0;right:0;top:628px;text-align:center;font-size:24px;color:color-mix(in srgb,var(--on-dark) 66%,var(--dark));letter-spacing:.02em}
+</style></head>
+<body>
+<div id="stage">
+  <div id="intro"><div id="iEyebrow"></div><div id="iTitle"></div><div id="iSub"></div><div id="iRule"></div></div>
+  <div id="rail"><div id="railHead"></div><div id="steps"></div></div>
+  <div id="vp">
+    <div id="content">
+      <div id="bar"><i></i><i></i><i></i><div id="addr"></div></div>
+      <div id="shots"></div>
+      <div id="scrollBox"><div id="sbA"><img></div><div id="sbB"><img></div></div>
+      <div id="clips"></div>
+      <div id="pressFx"></div>
+      <div id="ring"></div>
+    </div>
+    <svg id="cursor" viewBox="0 0 30 30"><path d="M5 3 L5 24 L10 19.5 L13.6 27 L17 25.5 L13.5 18.2 L20 18.2 Z" fill="#111" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>
+  </div>
+  <div id="outro"><div id="oLogo"></div><div id="oTitle"></div><div id="oTag"></div><div id="oSmall"></div></div>
+</div>
+<script>window.DATA=/*DATA*/null/*DATA*/;</script>
+<script>
+(() => {
+const D = window.DATA, V = D.video, F = D.flow, $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => b <= a ? (t >= b ? 1 : 0) : clamp((t - a) / (b - a));
+const eo = x => 1 - Math.pow(1 - x, 3), eo5 = x => 1 - Math.pow(1 - x, 5);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, lerp = (a, b, x) => a + (b - a) * x;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const hl = s => esc(s).replace(/\*(.+?)\*/g, '<span class="hl">$1</span>');   // *word* is the highlighted word
+const words = s => String(s || '').replace(/[*]/g, '').trim().split(/\s+/).filter(Boolean).length;
+const setOp = (el, o, ty = 0, sc = 1) => { el.style.opacity = o; el.style.transform = `translateY(${ty}px) scale(${sc})`; };
+
+// ---- brand: colours, font and logo from video.json
+const B = V.brand || {}, root = document.documentElement.style;
+for (const [k, v] of Object.entries({ ground: B.ground, ink: B.ink, muted: B.muted, accent: B.accent, accent2: B.accent2 || B.accent, dark: B.dark, 'on-dark': B.onDark, ring: B.ring, font: B.font }))
+  if (v) root.setProperty('--' + k, v);
+if (B.fontFiles) document.head.insertAdjacentHTML('beforeend', '<style>' + B.fontFiles.map(f => `@font-face{font-family:"${f.family}";src:url("${f.src}");font-weight:${f.weight || '100 900'}}`).join('') + '</style>');
+
+// ---- geometry. The capture is W x H CSS pixels; the browser window on the stage fits a 1280 x 880 area.
+const W = F.viewport.w, H = F.viewport.h, BAR = 40, CW = W, CHT = H + BAR;
+const fit = Math.min(1280 / CW, 880 / CHT), VPW = Math.round(CW * fit), VPH = Math.round(CHT * fit);
+Object.assign($('vp').style, { left: Math.round(600 + (1280 - VPW) / 2) + 'px', top: Math.round((1080 - VPH) / 2) + 'px', width: VPW + 'px', height: VPH + 'px' });
+Object.assign($('content').style, { width: CW + 'px', height: CHT + 'px' });
+$('bar').style.width = CW + 'px';
+const addrW = Math.min(640, CW * 0.45); Object.assign($('addr').style, { width: addrW + 'px', marginLeft: -addrW / 2 + 'px' });
+
+// ---- the actions, in order: each step lists actions from flow.json ("a3", or {"use":"a3", ...overrides}) or written by hand
+const byId = Object.fromEntries((F.actions || []).map(a => [a.id, a]));
+const acts = [];
+(V.steps || []).forEach((s, si) => (s.actions || []).forEach(e => {
+  const o = typeof e === 'string' ? { use: e } : e, base = o.use ? byId[o.use] : {};
+  if (o.use && !base) throw new Error(`video.json: step ${si + 1} uses "${o.use}", which is not in flow.json`);
+  const a = { ...base, ...o, step: si };
+  if (a.box) { const p = a.point || { x: a.box.x + a.box.w / 2, y: a.box.y + a.box.h / 2 }; a.B = { l: a.box.x, t: a.box.y + BAR, w: a.box.w, h: a.box.h, x: p.x, y: p.y + BAR }; }
+  acts.push(a);
+}));
+if (!acts.length) throw new Error('video.json: no actions in any step');
+const pointer = a => ['click', 'type', 'select', 'hover'].includes(a.type);
+for (const a of acts) if ((pointer(a) || a.type === 'ring') && !a.B) throw new Error(`action ${a.id || a.use || '?'} (${a.type}) has no box`);
+
+// ---- images: one element per captured screen, shown and hidden per frame
+const imgs = {}, clipImgs = {};
+const addImg = (src, into, store) => { if (!src || store[src]) return; const im = new Image(); im.decoding = 'sync'; im.src = src; into.appendChild(im); store[src] = im; };
+for (const a of acts) { for (const k of ['before', 'hover', 'focus', 'after']) addImg(a[k], $('shots'), imgs); for (const c of a.clips || []) addImg(c, $('clips'), clipImgs); }
+for (const im of Object.values(imgs)) Object.assign(im.style, { width: W + 'px', height: H + 'px' });
+
+// ---- the timeline: built from the actions, so the pace follows what there is to read and how far the pointer travels
+const T0 = 3.0;                                      // the first step opens when the intro has left
+let t = T0, pos = { x: CW * 0.56, y: BAR + H * 0.62 };
+const ST = [], PRESS = [], RINGS = [], CHIPS = [], CP = [[T0 + 0.2, { ...pos }]];
+const cp = (time, p) => CP.push([Math.max(time, CP[CP.length - 1][0] + 0.001), { x: p.x, y: p.y }]);
+const inside = (p, b, m) => p.x > b.l - m && p.x < b.l + b.w + m && p.y > b.t - m && p.y < b.t + b.h + m;
+V.steps.forEach((s, si) => {
+  const mine = acts.filter(a => a.step === si); ST[si] = t;
+  mine.forEach((a, k) => {
+    const i = acts.indexOf(a), prev = acts[i - 1], fast = a.pace === 'fast';
+    a.t0 = t;
+    const lead = a.lead ?? (i === 0 ? 1.2 : k === 0 ? 0.7 : prev && prev.nav ? 0.6 : a.type === 'scroll' ? 0.5 : fast ? 0.02 : 0.2);
+    if (pointer(a)) {
+      const dist = Math.hypot(a.B.x - pos.x, a.B.y - pos.y);
+      const travel = fast ? 0.2 : clamp(0.36 + dist / 2600, 0.42, 0.8), hov = fast ? 0.1 : 0.26;
+      a.tm0 = t + lead; a.tm1 = a.tm0 + travel; a.tp = a.tm1 + hov; a.th = a.tp - (fast ? 0.08 : 0.22);
+      cp(a.tm0, pos); cp(a.tm1, a.B); pos = { x: a.B.x, y: a.B.y };
+      let post;
+      if (a.type === 'type') {
+        a.ta = a.tp + 0.22; a.tb = a.ta + clamp((a.text || '').length / 16, 0.3, 1.6); post = a.tb - a.tp + 0.3;
+        // the pointer leaves the field, so it never covers the text being typed
+        const aside = { x: clamp(a.B.x + 34, 20, CW - 20), y: clamp(a.B.t + a.B.h + 26, BAR + 10, CHT - 10) };
+        cp(a.tp + 0.1, pos); cp(a.tp + 0.4, aside); pos = aside;
+      } else post = a.type === 'hover' ? 0.45 : a.type === 'select' ? 0.55 : a.nav ? 0.8 : fast ? 0.16 : 0.38;
+      if (a.type !== 'hover') PRESS.push(a.tp);
+      // a ring goes on the thing the pointer is about to press
+      if ((a.type === 'click' || a.type === 'select') && (a.ring ?? !fast)) RINGS.push({ a: Math.max(a.t0 + 0.05, a.tp - 0.95), b: a.tp + 0.3, B: a.B, r: a.radius });
+      a.t1 = a.tp + post + (a.hold || 0);
+    } else if (a.type === 'scroll') {
+      a.ts = t + lead; a.te = a.ts + (a.dur || 0.7); a.t1 = a.te + 0.15 + (a.hold || 0);
+    } else if (a.type === 'ring') {               // a figure or a line to read: no click
+      a.tr0 = t + lead; a.tr1 = a.tr0 + (a.hold ?? Math.max(1.4, 0.5 + 0.3 * words(a.label))); a.t1 = a.tr1 + 0.1;
+      RINGS.push({ a: a.tr0, b: a.tr1, B: a.B, r: a.radius });
+      if (inside(pos, a.B, 30)) { const aside = { x: clamp(a.B.l + a.B.w + 46, 20, CW - 20), y: clamp(a.B.t + a.B.h + 34, BAR + 10, CHT - 10) }; cp(a.tr0 - 0.05, pos); cp(a.tr0 + 0.4, aside); pos = aside; }
+    } else if (a.type === 'key') { a.tp = t + lead + 0.25; a.t1 = a.tp + (a.nav ? 0.8 : 0.4) + (a.hold || 0); }
+    else a.t1 = t + lead + (a.hold ?? 1.2);        // "view": just show the screen
+    if (a.chip) CHIPS.push({ step: si, label: a.chip, t: a.tp ?? a.ts ?? a.tr0 ?? a.t0 + lead });
+    t = a.t1;
+  });
+  // a step stays open long enough to read its text: 0.3 s a word, after it has settled
+  const need = 0.8 + 0.3 * (words(s.title) + words(s.text) + words(s.note) + mine.reduce((n, a) => n + words(a.chip), 0));
+  if (mine.length && t - ST[si] < need) { const add = need - (t - ST[si]); mine[mine.length - 1].t1 += add; t += add; }
+});
+const END = t + 0.5, DUR = +(END + 3.3).toFixed(2);
+cp(END, pos);
+
+// ---- camera: wide when a new page arrives, then close on the target; it stays put while the next target is in view
+const wide = { z: 1, fx: CW / 2, fy: CHT / 2 };
+const view = c => { const s = fit * c.z, ox = clamp(VPW / 2 - c.fx * s, VPW - CW * s, 0), oy = clamp(VPH / 2 - c.fy * s, VPH - CHT * s, 0); return { s, ox, oy }; };
+const inView = (c, b) => { const v = view(c), x0 = -v.ox / v.s, y0 = -v.oy / v.s, x1 = (VPW - v.ox) / v.s, y1 = (VPH - v.oy) / v.s, mx = (x1 - x0) * 0.05, my = (y1 - y0) * 0.05;
+  return b.l >= x0 + mx && b.l + b.w <= x1 - mx && b.t >= y0 + my && b.t + b.h <= y1 - my; };
+const boxOf = a => { const sb = a.type === 'scroll' && a.scroll && a.scroll.box; return sb ? { l: sb.x, t: sb.y + BAR, w: sb.w, h: sb.h } : a.B; };
+const frame = (b, zmin, zmax, k) => clamp(Math.min(zmax, k * W / Math.max(b.w, 1), k * H / Math.max(b.h, 1)), zmin, zmax);
+// One camera for a run of targets on the same screen (a form, a row of tabs), so it does not pan from field to field.
+const want = i => {
+  const a = acts[i];
+  if (a.camera === 'wide') return wide;
+  const b = boxOf(a); if (!b) return null;
+  if (a.zoom != null || a.aim) return { z: a.zoom ?? 1.4, fx: a.aim ? a.aim[0] : b.l + b.w / 2, fy: a.aim ? a.aim[1] + BAR : b.t + b.h / 2, b };
+  if (a.type === 'scroll') return null;                 // the page slides under the camera; the next target decides where it goes
+  let u = { ...b }, z = frame(b, a.type === 'type' ? 1.2 : 1, 1.5, 0.62);
+  for (let j = i + 1; j < acts.length && !acts[j - 1].nav && acts[j].type !== 'scroll' && acts[j].camera == null && acts[j].zoom == null; j++) {
+    const n = boxOf(acts[j]); if (!n) continue;
+    const l = Math.min(u.l, n.l), t = Math.min(u.t, n.t), m = { l, t, w: Math.max(u.l + u.w, n.l + n.w) - l, h: Math.max(u.t + u.h, n.t + n.h) - t };
+    const zm = frame(m, 1, 1.5, 0.8); if (zm < 1.2) break;
+    u = m; z = Math.min(z, zm);
+  }
+  return { z, fx: u.l + u.w / 2, fy: u.t + u.h / 2, b };
+};
+let cam = wide; const CK = [[0, wide]];
+const ck = (time, c) => CK.push([Math.max(time, CK[CK.length - 1][0] + 0.001), c]);
+acts.forEach((a, i) => {
+  const w = want(i);
+  if (w) {
+    const keep = a.zoom == null && a.aim == null && a.camera == null && cam !== wide && inView(cam, w.b) && cam.z >= w.z - 0.35;
+    if (!keep && !(w === wide && cam === wide)) {
+      const end = pointer(a) ? a.tm1 - 0.02 : a.type === 'ring' ? a.tr0 + 0.45 : a.t0 + 0.6;
+      ck(Math.max(a.t0 + 0.02, end - 0.62), cam); ck(end, w); cam = w;
+    }
+  }
+  if (a.nav && a.tp != null) { ck(a.tp + 0.26, cam); ck(a.tp + 0.78, wide); cam = wide; }
+});
+ck(END, cam);
+function camAt(t) { for (let i = 0; i < CK.length - 1; i++) if (t <= CK[i + 1][0]) { const k = eio(seg(t, CK[i][0], CK[i + 1][0])), a = CK[i][1], b = CK[i + 1][1]; return { z: lerp(a.z, b.z, k), fx: lerp(a.fx, b.fx, k), fy: lerp(a.fy, b.fy, k) }; } return CK[CK.length - 1][1]; }
+
+// ---- the address bar: host and path, without the query, with long ids shortened
+function showUrl(raw) {
+  if (!raw) return '';
+  for (const [re, to] of (V.url && V.url.replace) || []) if (new RegExp(re).test(raw)) return raw.replace(new RegExp(re), to);
+  try { const u = new URL(raw);
+    if (u.protocol === 'file:') return decodeURIComponent(u.pathname.split('/').pop()) + (u.hash.startsWith('#/') ? u.hash : '');
+    const p = u.pathname.split('/').map(s => s.length > 20 || /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(s) ? s.slice(0, 8) + '…' : s).join('/');
+    return u.host.replace(/^www\./, '') + (p === '/' ? '' : p) + (u.hash.startsWith('#/') ? u.hash : '');
+  } catch { return raw; }
+}
+
+// ---- static text
+$('iEyebrow').textContent = V.eyebrow || ''; $('iTitle').innerHTML = hl(V.title || ''); $('iSub').textContent = V.subtitle || '';
+$('railHead').innerHTML = (B.logo ? `<img src="${esc(B.logo)}">` : '') + (V.railLabel ? `<span>${esc(V.railLabel)}</span>` : (!B.logo && V.eyebrow ? `<span>${esc(V.eyebrow)}</span>` : ''));
+const O = V.outro || {};
+$('oLogo').innerHTML = (B.logoDark || B.logo) ? `<img src="${esc(B.logoDark || B.logo)}">` : (V.eyebrow ? `<span>${esc(V.eyebrow)}</span>` : '');
+$('oTitle').innerHTML = hl(O.title || 'Done.'); $('oTag').innerHTML = hl(O.tag || ''); $('oSmall').textContent = O.small || '';
+$('steps').innerHTML = V.steps.map((s, i) => {
+  const chips = CHIPS.filter(c => c.step === i);
+  return `<div class="step" id="st${i}"><div class="badge">${i + 1}</div><div class="st">${esc(s.title)}</div><div class="sd">` +
+    (s.text ? `<p>${esc(s.text)}</p>` : '') +
+    (chips.length ? `<div class="chips">${chips.map((c, k) => `${k ? '<span class="arrow">›</span>' : ''}<span class="chip" data-t="${c.t}">${esc(c.label)}</span>`).join('')}</div>` : '') +
+    (s.note ? `<div class="note">${esc(s.note).replace(/\n/g, '<br>')}</div>` : '') + `</div></div>`;
+}).join('');
+const chipEls = [...document.querySelectorAll('.chip')];
+const CHECK = '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
+// a title that is too wide for the frame is set smaller
+function fitText(el, max, size) {
+  const width = () => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect().width; };
+  let s = size; el.style.fontSize = s + 'px';
+  while (width() > max && s > 40) { s -= 4; el.style.fontSize = s + 'px'; }
+}
+
+let visible = [];
+const sbA = $('sbA').firstChild, sbB = $('sbB').firstChild;
+function render(t) {
+  visible = [];
+  // ---- intro
+  const hk = 1 - eo(seg(t, 2.55, 2.8)); $('intro').style.display = hk > 0 ? 'block' : 'none';
+  const ek = eo(seg(t, 0.06, 0.55)); setOp($('iEyebrow'), ek * hk, (1 - ek) * 14 - (1 - hk) * 24);
+  const tk = eo(seg(t, 0.14, 0.7)); setOp($('iTitle'), tk * hk, (1 - tk) * 26 - (1 - hk) * 30);
+  const sk = eo(seg(t, 0.5, 1.0)); setOp($('iSub'), sk * hk, (1 - sk) * 18 - (1 - hk) * 30);
+  const rk = eo(seg(t, 0.8, 1.3)); setOp($('iRule'), rk * hk, (1 - rk) * 10 - (1 - hk) * 30, 0.4 + 0.6 * rk);
+  // ---- rail and window
+  const rl = eo(seg(t, 2.75, 3.3)), vk = eo5(seg(t, 2.8, 3.45));
+  $('rail').style.opacity = rl; $('rail').style.transform = `translateX(${(1 - rl) * -40}px)`;
+  $('vp').style.opacity = vk; $('vp').style.transform = `translateY(${(1 - vk) * 40}px) scale(${0.96 + 0.04 * vk})`;
+  let cur = 0; for (let i = 0; i < ST.length; i++) if (t >= ST[i] - 0.05) cur = i;
+  let y = 206;
+  V.steps.forEach((s, i) => {
+    const el = $('st' + i), on = i === cur, allDone = t >= END - 0.3;
+    // stagger: the old step closes first, then the new one opens, so two texts are never half visible at once
+    const actK = eo(seg(t, ST[i] + (i ? 0.22 : -0.05), ST[i] + (i ? 0.62 : 0.4))), offK = i < ST.length - 1 ? eo(seg(t, ST[i + 1] - 0.05, ST[i + 1] + 0.24)) : 0, open = actK * (1 - offK);
+    const sd = el.querySelector('.sd'); el.style.top = y + 'px'; y += 78 + open * (sd.scrollHeight + 14);
+    sd.style.opacity = open; sd.style.transform = `translateY(${(1 - open) * -8}px)`; sd.style.visibility = open > 0.01 ? 'visible' : 'hidden';
+    const b = el.querySelector('.badge'), st = el.querySelector('.st');
+    if (i < cur || allDone) { if (b.dataset.s !== 'd') { b.innerHTML = CHECK; b.dataset.s = 'd'; } b.style.background = 'var(--tint)'; b.style.color = 'var(--accent)'; st.style.color = 'var(--muted)'; b.style.transform = 'scale(1)'; }
+    else { if (b.dataset.s !== 'n') { b.textContent = i + 1; b.dataset.s = 'n'; }
+      if (on) { b.style.background = 'linear-gradient(105deg,var(--accent),var(--accent2))'; b.style.color = '#fff'; st.style.color = 'var(--ink)'; b.style.transform = `scale(${1 + 0.12 * Math.sin(Math.PI * seg(t, ST[i], ST[i] + 0.45))})`; }
+      else { b.style.background = 'var(--soft)'; b.style.color = 'var(--faint)'; st.style.color = 'var(--muted)'; b.style.transform = 'scale(1)'; } }
+  });
+  chipEls.forEach(c => { const ct = +c.dataset.t, on = t >= ct; c.className = 'chip' + (on ? ' on' : ''); c.style.transform = `scale(${on ? 1 + 0.08 * Math.sin(Math.PI * seg(t, ct, ct + 0.3)) : 1})`; });
+  // ---- camera
+  const c = camAt(t), v = view({ z: c.z * (1 + 0.004 * Math.sin(t * 0.7)), fx: c.fx, fy: c.fy });
+  $('content').style.transform = `translate(${v.ox}px,${v.oy}px) scale(${v.s})`;
+  // ---- which captured screen is showing
+  let ai = 0; for (let k = 0; k < acts.length; k++) if (t >= acts[k].t0) ai = k;
+  const a = acts[ai], L = []; let clip = null, scroll = null, url = a.url;
+  if (t < acts[0].t0) L.push([acts[0].before, 1]);
+  else if (a.type === 'click' || a.type === 'select' || a.type === 'key') {
+    const pre = (a.hover && a.type !== 'key' && t >= a.th) ? a.hover : a.before;
+    if (a.nav) {            // a new page: the old one leaves fully, then the new one arrives
+      const o = 1 - eo(seg(t, a.tp + 0.08, a.tp + 0.3)), n = eo(seg(t, a.tp + 0.24, a.tp + 0.5));
+      if (o > 0.001) L.push([pre, o]); if (n > 0.001) L.push([a.after, n]); if (t >= a.tp + 0.24) url = a.urlAfter || url;
+    } else if (t < a.tp + (a.type === 'click' ? 0.1 : 0.14)) L.push([pre, 1]);
+    else { L.push([a.after, 1]); url = a.urlAfter || url; }
+  } else if (a.type === 'type') {
+    if (t < a.tp + 0.08) L.push([(a.hover && t >= a.th) ? a.hover : a.before, 1]);
+    else if (t < a.tb + 0.06) { L.push([a.focus || a.hover || a.before, 1]);
+      const n = (a.clips || []).length; if (n && t >= a.ta) clip = { src: a.clips[Math.min(n - 1, Math.floor(seg(t, a.ta, a.tb) * n))], box: a.clipBox }; }
+    else L.push([a.after, 1]);
+  } else if (a.type === 'hover') L.push([t < a.tp ? a.before : a.after, 1]);
+  else if (a.type === 'scroll') { if (t < a.ts) L.push([a.before, 1]); else { L.push([a.after, 1]); if (t < a.te) scroll = eio(seg(t, a.ts, a.te)); } }
+  else L.push([a.before || a.after, 1]);
+  if (t >= a.t1 && a.after && !['scroll'].includes(a.type) && !L.some(l => l[0] === a.after)) { L.length = 0; L.push([a.after, 1]); }
+  const shown = new Map(L.filter(l => l[0]));
+  for (const [src, im] of Object.entries(imgs)) { const o = shown.get(src); if (o == null) im.style.display = 'none'; else { im.style.display = 'block'; im.style.opacity = o; im.style.zIndex = [...shown.keys()].indexOf(src); visible.push(im); } }
+  for (const [src, im] of Object.entries(clipImgs)) {
+    if (clip && clip.src === src) { Object.assign(im.style, { display: 'block', left: clip.box.x + 'px', top: clip.box.y + 'px', width: clip.box.w + 'px', height: clip.box.h + 'px' }); visible.push(im); }
+    else im.style.display = 'none';
+  }
+  // a scroll: inside the part that scrolled, the old screen slides out and the new one slides in
+  if (scroll != null && a.scroll) {
+    const b = a.scroll.box || { x: 0, y: 0, w: W, h: H }, d = Math.min(Math.abs(a.scroll.dy), b.h) * Math.sign(a.scroll.dy);
+    Object.assign($('scrollBox').style, { display: 'block', left: b.x + 'px', top: (b.y + BAR) + 'px', width: b.w + 'px', height: b.h + 'px' });
+    for (const [wrap, im, src, off] of [[$('sbA'), sbA, a.before, -d * scroll], [$('sbB'), sbB, a.after, d * (1 - scroll)]]) {
+      Object.assign(wrap.style, { width: b.w + 'px', height: b.h + 'px', transform: `translateY(${off}px)` });
+      if (im.dataset.src !== src) { im.src = src; im.dataset.src = src; }
+      Object.assign(im.style, { left: -b.x + 'px', top: -b.y + 'px', width: W + 'px', height: H + 'px' }); visible.push(im);
+    }
+  } else $('scrollBox').style.display = 'none';
+  $('addr').textContent = showUrl(url);
+  // ---- the press, visible on the button itself
+  const pa = acts.find(x => pointer(x) && x.type !== 'hover' && t > x.tp && t < x.tp + 0.14);
+  if (pa) Object.assign($('pressFx').style, { display: 'block', left: pa.B.l + 'px', top: pa.B.t + 'px', width: pa.B.w + 'px', height: pa.B.h + 'px', borderRadius: (pa.radius ?? 8) + 'px' });
+  else $('pressFx').style.display = 'none';
+  // ---- ring
+  let rr = null; for (const r of RINGS) if (t >= r.a && t <= r.b) rr = r;
+  if (rr) { const k = eo5(seg(t, rr.a, rr.a + 0.25)) * (1 - seg(t, rr.b - 0.2, rr.b)), pad = 5 + (1 - k) * 12;
+    Object.assign($('ring').style, { display: 'block', opacity: k, left: (rr.B.l - pad) + 'px', top: (rr.B.t - pad) + 'px', width: (rr.B.w + pad * 2) + 'px', height: (rr.B.h + pad * 2) + 'px', borderRadius: ((rr.r ?? 8) + pad) + 'px' }); }
+  else $('ring').style.display = 'none';
+  // ---- pointer: it arrives before each press and stays through it
+  let p = CP[CP.length - 1][1];
+  if (t <= CP[0][0]) p = CP[0][1];
+  else for (let i = 0; i < CP.length - 1; i++) if (t <= CP[i + 1][0]) { const k = eio(seg(t, CP[i][0], CP[i + 1][0])); p = { x: lerp(CP[i][1].x, CP[i + 1][1].x, k), y: lerp(CP[i][1].y, CP[i + 1][1].y, k) }; break; }
+  const press = PRESS.some(x => t > x && t < x + 0.12);
+  $('cursor').style.transform = `translate(${v.ox + p.x * v.s - 4}px,${v.oy + p.y * v.s - 3}px) scale(${press ? 0.88 : 1})`;
+  $('cursor').style.opacity = seg(t, T0 + 0.2, T0 + 0.5);
+  // ---- outro
+  const ok = eio(seg(t, END, END + 0.55)); $('outro').style.clipPath = `circle(${ok * 1400}px at 1240px 540px)`; $('outro').style.display = ok > 0 ? 'block' : 'none';
+  const om = eo5(seg(t, END + 0.4, END + 0.95)); setOp($('oLogo'), om, (1 - om) * 24);
+  const ot = eo(seg(t, END + 0.6, END + 1.1)); setOp($('oTitle'), ot, (1 - ot) * 24);
+  const og = eo(seg(t, END + 1.0, END + 1.5)); setOp($('oTag'), og, (1 - og) * 18);
+  const os = eo(seg(t, END + 1.4, END + 1.85)); setOp($('oSmall'), os, (1 - os) * 12);
+}
+
+// ---- what render.mjs reads: the length, the click times for the sound, and the moments worth checking in a still
+const label = a => `${a.id || a.use ? (a.id || a.use) + ' ' : ''}${a.type}${a.label ? ' "' + a.label + '"' : ''}`;
+const checks = [{ t: 1.7, label: 'intro' }];
+acts.forEach(a => {
+  if (a.tp != null) checks.push({ t: +(a.tp - 0.03).toFixed(2), label: label(a) + ' (press)' });
+  if (a.nav && a.tp != null) checks.push({ t: +(a.tp + 0.27).toFixed(2), label: label(a) + ' (page change)' });
+  if (a.type === 'type') checks.push({ t: +((a.ta + a.tb) / 2).toFixed(2), label: label(a) + ' (typing)' });
+  if (a.type === 'scroll') checks.push({ t: +((a.ts + a.te) / 2).toFixed(2), label: label(a) + ' (mid scroll)' });
+  if (a.type === 'ring') checks.push({ t: +((a.tr0 + a.tr1) / 2).toFixed(2), label: label(a) });
+  checks.push({ t: +(a.t1 - 0.02).toFixed(2), label: label(a) + ' (after)' });
+});
+ST.forEach((s, i) => { if (i) checks.push({ t: +(s + 0.42).toFixed(2), label: `step ${i + 1} opens` }); });
+checks.push({ t: +(END + 0.3).toFixed(2), label: 'outro wipe' }, { t: +(END + 2.4).toFixed(2), label: 'outro' });
+checks.sort((x, y) => x.t - y.t);
+window.TIMELINE = { duration: DUR, end: END, presses: PRESS.map(x => +x.toFixed(3)), steps: ST.map((s, i) => ({ title: V.steps[i].title, start: +s.toFixed(2) })),
+  actions: acts.map(a => ({ id: a.id || a.use || null, type: a.type, label: a.label || null, start: +a.t0.toFixed(2), press: a.tp != null ? +a.tp.toFixed(2) : null, end: +a.t1.toFixed(2) })), checks, poster: 1.7, cursor: CP.map(k => [+k[0].toFixed(2), Math.round(k[1].x), Math.round(k[1].y)]), camera: CK.map(k => [+k[0].toFixed(2), +k[1].z.toFixed(2), Math.round(k[1].fx), Math.round(k[1].fy)]) };
+window.render = render;
+window.seek = async t => { render(t); await Promise.all(visible.map(im => im.decode().catch(() => {}))); };
+window.ready = document.fonts.ready
+  .then(() => Promise.all([...document.images].map(i => i.complete ? 1 : new Promise(r => { i.onload = r; i.onerror = () => r(console.error('missing image: ' + i.src)); }))))
+  .then(() => { fitText($('iTitle'), 1700, 92); fitText($('oTitle'), 1700, 104); render(0); return true; });
+})();
+</script>
+</body></html>

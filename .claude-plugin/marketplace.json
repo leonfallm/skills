@@ -9,13 +9,17 @@
     {
       "name": "leonfallm-skills",
       "source": "./",
-      "description": "Agent skills — canvas-architect draws hand-drawn architecture, C4, flow, sequence and comparison diagrams on the tldraw offline canvas, with a screenshot-verify loop. More to come.",
+      "description": "Agent skills: canvas-architect draws hand-drawn architecture, C4, flow, sequence and comparison diagrams on the tldraw offline canvas, with a screenshot-verify loop. tutorial-video turns a real, signed-in web flow into a step-by-step tutorial video.",
       "category": "engineering",
       "keywords": [
         "diagram",
         "architecture",
         "tldraw",
         "c4",
+        "tutorial",
+        "video",
+        "screen-capture",
+        "playwright",
         "claude-code",
         "codex",
         "cursor"

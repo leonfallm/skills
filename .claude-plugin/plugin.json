@@ -1,7 +1,7 @@
 {
   "name": "leonfallm-skills",
-  "version": "0.1.0",
-  "description": "Agent skills — canvas-architect draws hand-drawn architecture, C4, flow, sequence and comparison diagrams on the tldraw offline canvas, with a screenshot-verify loop and swappable palettes.",
+  "version": "0.2.0",
+  "description": "Agent skills: canvas-architect draws hand-drawn architecture, C4, flow, sequence and comparison diagrams on the tldraw offline canvas, with a screenshot-verify loop. tutorial-video turns a real, signed-in web flow into a step-by-step tutorial video.",
   "author": {
     "name": "Leon Fallman",
     "url": "https://www.monterro.com"
@@ -12,11 +12,16 @@
     "architecture",
     "tldraw",
     "c4",
+    "tutorial",
+    "video",
+    "screen-capture",
+    "playwright",
     "claude-code",
     "codex",
     "cursor"
   ],
   "skills": [
-    "./skills/engineering/canvas-architect"
+    "./skills/engineering/canvas-architect",
+    "./skills/video/tutorial-video"
   ]
 }

@@ -47,6 +47,13 @@ claude plugin install leonfallm-skills@leonfallm
   palettes (ink / cool / warm), and a screenshot-verify loop so diagrams come out designed,
   not wireframed. Requires the free tldraw offline desktop app.
 
+- **[tutorial-video](./skills/video/tutorial-video/SKILL.md)**: make a step-by-step tutorial
+  video (MP4) of a real web app, including pages behind a login. The agent drives a signed-in
+  browser one click at a time, records every screen and click target, and renders the flow
+  with a step rail, a zooming browser window, a pointer that lands on each target, highlight
+  rings and one soft click per click. Brand-neutral: colours, font and logo come from one
+  JSON file. Requires Node 18+, ffmpeg, and Chrome, Edge or the Chromium the skill downloads.
+
 _More to come._
 
 ## Layout
